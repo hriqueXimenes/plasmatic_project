@@ -1,5 +1,5 @@
 import type { AWS } from '@serverless/typescript';
-import { fetchPets } from './src/functions/pet/index';
+import { fetchPets, createPet } from './src/functions/pet/index';
 import * as dotenv from 'dotenv';
 
 dotenv.config()
@@ -37,7 +37,7 @@ const serverlessConfiguration: AWS = {
     },
   },
   // import the function via paths
-  functions: { fetchPets },
+  functions: { fetchPets, createPet },
   package: { individually: true },
   custom:{
     esbuild: {
@@ -66,11 +66,11 @@ const serverlessConfiguration: AWS = {
         Properties: {
           TableName: '${env:DYNAMO_TABLE_PETS}',
           AttributeDefinitions: [{
-            AttributeName: "petId",
+            AttributeName: "id",
             AttributeType: "S",
           }],
           KeySchema: [{
-            AttributeName: "petId",
+            AttributeName: "id",
             KeyType: "HASH"
           }],
           ProvisionedThroughput: {

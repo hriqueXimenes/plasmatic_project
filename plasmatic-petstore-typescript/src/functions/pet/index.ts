@@ -11,3 +11,15 @@ export const fetchPets = {
         },
     ],
 };
+
+export const createPet = {
+    handler: `${handlerPath(__dirname)}/handler.createPet`,
+    events: [
+        {
+            http: {
+                method: 'post',
+                path: 'pet',
+            },
+        },
+    ],
+};
