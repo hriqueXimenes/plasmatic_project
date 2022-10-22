@@ -20,8 +20,6 @@ export class PetService {
         const pets = await this.dynamoDb.scan({
             TableName: this.tableName,
         }).promise()
-
-        console.log(pets.Items as Pet[])
         
         return pets.Items as Pet[];
     }
