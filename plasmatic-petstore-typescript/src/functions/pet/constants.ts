@@ -3,4 +3,3 @@ export enum PET_STATUS {
     PENDING = 'pending',
     SOLD = 'sold'
   }
-  

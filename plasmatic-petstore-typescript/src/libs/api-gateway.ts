@@ -5,7 +5,7 @@ type ValidatedAPIGatewayProxyEvent<S> = Omit<APIGatewayProxyEvent, 'body'> & { b
 export type ValidatedEventAPIGatewayProxyEvent<S> = Handler<ValidatedAPIGatewayProxyEvent<S>, APIGatewayProxyResult>
 
 export const HttpCode = {
-  Successfully: 400,
+  Successfully: 200,
   BadRequest: 400,
   Exception: 500
 }
