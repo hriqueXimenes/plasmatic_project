@@ -1,13 +1,14 @@
 import { PET_STATUS } from '../constants';
 
-export class CreatePetDTO {
+export class UpdatePetDTO {
+    id: string;
     name: string;
     status: PET_STATUS;
     category: string;
-    tags: CreatePetTagDTO[];
+    tags: UpdatePetTagDTO[];
 }
 
-export class CreatePetTagDTO {
+export class UpdatePetTagDTO {
     key: string;
     value: string;
 }
