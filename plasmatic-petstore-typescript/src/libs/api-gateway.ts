@@ -30,5 +30,6 @@ export const formatJSONError = (msg:string) => {
 export const formatJSONException = () => {
   return {
     statusCode: HttpCode.Exception,
+    body: null
   }
 }

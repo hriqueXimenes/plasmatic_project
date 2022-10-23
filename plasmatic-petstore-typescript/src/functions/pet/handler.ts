@@ -1,4 +1,4 @@
-import { formatJSONResponse, formatJSONError } from '@libs/api-gateway';
+import { formatJSONResponse, formatJSONError, formatJSONException } from '@libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreatePetDTO } from './dto/create-pet.dto';
 import { Schema } from './dto/schema';
@@ -8,11 +8,15 @@ import { PetService } from './service';
 const petService = new PetService();
 
 export const fetchPets = async (): Promise<APIGatewayProxyResult> => {
-    const pets = await petService.fetchPets();
-    console.log(pets)
-    return formatJSONResponse ({
-        pets
-    })
+    try {
+        const pets = await petService.fetchPets();
+        return formatJSONResponse({
+            pets
+        })
+    } catch (error) {
+        return formatJSONException()
+    }
+
 }
 
 export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -22,9 +26,13 @@ export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGateway
     if (validateError) {
         return formatJSONError(validateError.details[0].message)
     }
-    
-    const pet = await petService.createPet(dto);
-    return formatJSONResponse ({
-        ...pet
-    })
+
+    try {
+        const pet = await petService.createPet(dto);
+        return formatJSONResponse({
+            ...pet
+        })
+    } catch (error) {
+        return formatJSONException()
+    }
 }
