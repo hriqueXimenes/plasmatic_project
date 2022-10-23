@@ -31,7 +31,7 @@ const serverlessConfiguration: AWS = {
             "dynamodb:UpdateItem",
             "dynamodb:DeleteItem",
           ],
-          Resource: "arn:aws:dynamodb:us-west-2:*:table/TodosTable",
+          Resource: "arn:aws:dynamodb:us-east-1:*:table/*",
         }],
       },
     },
@@ -64,7 +64,7 @@ const serverlessConfiguration: AWS = {
       PetTable: {
         Type: "AWS::DynamoDB::Table",
         Properties: {
-          TableName: '${env:DYNAMO_TABLE_PETS}',
+          TableName: 'pets',
           AttributeDefinitions: [{
             AttributeName: "id",
             AttributeType: "S",
@@ -73,6 +73,32 @@ const serverlessConfiguration: AWS = {
             AttributeName: "id",
             KeyType: "HASH"
           }],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1
+          },
+        }
+      },
+      PetTagsTable: {
+        Type: "AWS::DynamoDB::Table",
+        Properties: {
+          TableName: 'orders',
+          AttributeDefinitions: [{
+            AttributeName: "id",
+            AttributeType: "S",
+          }, {
+            AttributeName: "petid",
+            AttributeType: "S",
+          }],
+          KeySchema: [{
+            AttributeName: "petid",
+            KeyType: "HASH"
+          },
+          {
+            AttributeName: "id",
+            KeyType: "RANGE"
+          },
+        ],
           ProvisionedThroughput: {
             ReadCapacityUnits: 1,
             WriteCapacityUnits: 1
