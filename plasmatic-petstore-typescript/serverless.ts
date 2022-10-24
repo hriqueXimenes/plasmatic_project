@@ -1,5 +1,5 @@
 import type { AWS } from '@serverless/typescript';
-import { fetchPets } from './src/functions/pet/index';
+import { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet } from './src/functions/pet/index';
 import * as dotenv from 'dotenv';
 
 dotenv.config()
@@ -11,6 +11,8 @@ const serverlessConfiguration: AWS = {
     name: 'aws',
     runtime: 'nodejs16.x',
     apiGateway: {
+      binaryMediaTypes: [
+        '*/*'],
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
     },
@@ -31,13 +33,21 @@ const serverlessConfiguration: AWS = {
             "dynamodb:UpdateItem",
             "dynamodb:DeleteItem",
           ],
-          Resource: "arn:aws:dynamodb:us-west-2:*:table/TodosTable",
+          Resource: "arn:aws:dynamodb:us-east-1:*:table/*",
+        },
+        {
+          Effect: "Allow",
+          Action: [
+            "s3:PutObject",
+            "s3:PutObjectAcl",
+          ],
+          Resource: "arn:aws:s3:::bucket-plasmatic/*",
         }],
       },
     },
   },
   // import the function via paths
-  functions: { fetchPets },
+  functions: { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet },
   package: { individually: true },
   custom:{
     esbuild: {
@@ -64,13 +74,13 @@ const serverlessConfiguration: AWS = {
       PetTable: {
         Type: "AWS::DynamoDB::Table",
         Properties: {
-          TableName: '${env:DYNAMO_TABLE_PETS}',
+          TableName: 'pets',
           AttributeDefinitions: [{
-            AttributeName: "petId",
+            AttributeName: "id",
             AttributeType: "S",
           }],
           KeySchema: [{
-            AttributeName: "petId",
+            AttributeName: "id",
             KeyType: "HASH"
           }],
           ProvisionedThroughput: {
@@ -78,8 +88,40 @@ const serverlessConfiguration: AWS = {
             WriteCapacityUnits: 1
           },
         }
+      },
+      PetTagsTable: {
+        Type: "AWS::DynamoDB::Table",
+        Properties: {
+          TableName: 'orders',
+          AttributeDefinitions: [{
+            AttributeName: "id",
+            AttributeType: "S",
+          }, {
+            AttributeName: "petid",
+            AttributeType: "S",
+          }],
+          KeySchema: [{
+            AttributeName: "petid",
+            KeyType: "HASH"
+          },
+          {
+            AttributeName: "id",
+            KeyType: "RANGE"
+          },
+        ],
+          ProvisionedThroughput: {
+            ReadCapacityUnits: 1,
+            WriteCapacityUnits: 1
+          },
+        }
+      },
+      Bucket: {
+        Type: "AWS::S3::Bucket",
+        Properties: {
+          BucketName: "bucket-plasmatic"
+        }
       }
-    }
+    },
   }
 };
 module.exports = serverlessConfiguration;

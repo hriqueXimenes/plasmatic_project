@@ -8,5 +8,6 @@ export const dynamoDBClient = (): DocumentClient => {
       endpoint: "http://localhost:5000",
     });
   }
+  
   return new AWS.DynamoDB.DocumentClient();
 };
