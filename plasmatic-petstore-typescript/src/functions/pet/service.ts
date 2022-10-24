@@ -153,4 +153,8 @@ export class PetService {
             throw error;
         }
     }
+
+    getTableName() {
+        return this.tableNamePets
+    }
 }
