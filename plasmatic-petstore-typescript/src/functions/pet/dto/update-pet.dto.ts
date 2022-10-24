@@ -6,6 +6,7 @@ export class UpdatePetDTO {
     status: PET_STATUS;
     category: string;
     tags: UpdatePetTagDTO[];
+    images: string[];
 }
 
 export class UpdatePetTagDTO {

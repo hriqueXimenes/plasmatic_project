@@ -6,6 +6,8 @@ import * as dotenv from 'dotenv';
 import { v4 } from "uuid";
 import { UpdatePetDTO } from "./dto/update-pet.dto";
 import { FetchPetDTO } from "./dto/fetch-pet";
+import { S3 } from "aws-sdk";
+import { format } from "path";
 
 
 dotenv.config()
@@ -13,8 +15,10 @@ export class PetService {
 
     private tableNamePets: string;
     private dynamoDb: DocumentClient;
+    private s3:S3;
 
     constructor() {
+        this.s3 = new S3()
         this.tableNamePets = "pets"
         this.dynamoDb = dynamoDBClient()
     }
@@ -104,7 +108,7 @@ export class PetService {
         try {
             const oldPet = await this.fetchPet(id);
             if (!oldPet) {
-                throw Error('pin not found');
+                throw Error('pet not found');
             }
 
             oldPet.deletedAt = new Date().toISOString();
@@ -119,6 +123,32 @@ export class PetService {
             }).promise();
 
             return result.Attributes as Pet;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async uploadImagePet(filename, data, id:string): Promise<any> {
+        try {
+            const oldPet = await this.fetchPet(id);
+            if (!oldPet) {
+                throw Error('pet not found');
+            }
+
+            const format = filename.split(".")
+            const newFilename = v4() + "." + format[1]
+            await this.s3.putObject({ Bucket: "bucket-plasmatic", Key: newFilename, ACL: 'public-read', Body: data, ContentType: "image/png" }).promise();
+            if (!oldPet.images) {
+                oldPet.images = [];
+            }
+
+            oldPet.images.push(newFilename)
+            const dto = new UpdatePetDTO();
+            dto.id = oldPet.id;
+            dto.images = oldPet.images
+
+            await this.updatePet(dto)
+            return oldPet;
         } catch (error) {
             throw error;
         }

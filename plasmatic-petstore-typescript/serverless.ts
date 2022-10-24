@@ -1,5 +1,5 @@
 import type { AWS } from '@serverless/typescript';
-import { fetchPet, fetchPets, createPet, updatePet, deletePet } from './src/functions/pet/index';
+import { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet } from './src/functions/pet/index';
 import * as dotenv from 'dotenv';
 
 dotenv.config()
@@ -11,6 +11,8 @@ const serverlessConfiguration: AWS = {
     name: 'aws',
     runtime: 'nodejs16.x',
     apiGateway: {
+      binaryMediaTypes: [
+        '*/*'],
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
     },
@@ -32,12 +34,20 @@ const serverlessConfiguration: AWS = {
             "dynamodb:DeleteItem",
           ],
           Resource: "arn:aws:dynamodb:us-east-1:*:table/*",
+        },
+        {
+          Effect: "Allow",
+          Action: [
+            "s3:PutObject",
+            "s3:PutObjectAcl",
+          ],
+          Resource: "arn:aws:s3:::bucket-plasmatic/*",
         }],
       },
     },
   },
   // import the function via paths
-  functions: { fetchPet, fetchPets, createPet, updatePet, deletePet },
+  functions: { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet },
   package: { individually: true },
   custom:{
     esbuild: {
@@ -103,6 +113,12 @@ const serverlessConfiguration: AWS = {
             ReadCapacityUnits: 1,
             WriteCapacityUnits: 1
           },
+        }
+      },
+      Bucket: {
+        Type: "AWS::S3::Bucket",
+        Properties: {
+          BucketName: "bucket-plasmatic"
         }
       }
     },

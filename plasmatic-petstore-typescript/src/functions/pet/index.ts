@@ -24,6 +24,18 @@ export const fetchPets = {
     ],
 };
 
+export const uploadImagePet = {
+    handler: `${handlerPath(__dirname)}/handler.uploadImagePet`,
+    events: [
+        {
+            http: {
+                method: 'post',
+                path: 'pet/{id}/image',
+            },
+        },
+    ],
+};
+
 export const createPet = {
     handler: `${handlerPath(__dirname)}/handler.createPet`,
     events: [
