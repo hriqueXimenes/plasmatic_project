@@ -6,7 +6,6 @@ import { ValidatePetDTO } from './dto/schema';
 import { UpdatePetDTO } from './dto/update-pet.dto';
 import { PetService } from './service';
 import parseMultipart from 'parse-multipart';
-import fs from "fs";
 
 
 const petService = new PetService();

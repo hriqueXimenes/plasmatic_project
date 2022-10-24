@@ -1,5 +1,6 @@
 import type { AWS } from '@serverless/typescript';
 import { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet } from './src/functions/pet/index';
+import { fetchOrder, createOrder, deleteOrder } from './src/functions/order/route';
 import * as dotenv from 'dotenv';
 
 dotenv.config()
@@ -47,7 +48,7 @@ const serverlessConfiguration: AWS = {
     },
   },
   // import the function via paths
-  functions: { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet },
+  functions: { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet, fetchOrder, createOrder, deleteOrder },
   package: { individually: true },
   custom:{
     esbuild: {
