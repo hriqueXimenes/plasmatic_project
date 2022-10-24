@@ -6,6 +6,7 @@ export class Pet {
     status: PET_STATUS;
     category: string;
     tags: PetTag[];
+    images: string[];
 
     createdAt: string;
     updatedAt: string;

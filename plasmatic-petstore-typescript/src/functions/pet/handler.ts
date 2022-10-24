@@ -5,6 +5,8 @@ import { FetchPetDTO } from './dto/fetch-pet';
 import { ValidatePetDTO } from './dto/schema';
 import { UpdatePetDTO } from './dto/update-pet.dto';
 import { PetService } from './service';
+import parseMultipart from 'parse-multipart';
+import fs from "fs";
 
 
 const petService = new PetService();
@@ -39,7 +41,6 @@ export const fetchPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayP
             ...pets
         })
     } catch (error) {
-        console.log(error)
         return formatJSONException()
     }
 }
@@ -94,3 +95,40 @@ export const deletePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
         return formatJSONException()
     }
 }
+
+export const uploadImagePet = async (event): Promise<APIGatewayProxyResult> => {
+    //serverless-offline don't convert multipart to base64 - need to deploy in AWS.
+    if (!event.pathParameters.id) {
+        return formatJSONError("Id parameter is mandatory")
+    }
+
+    try {
+        const { filename, data } = extractFile(event)
+        const pet = await petService.uploadImagePet(filename, data, event.pathParameters.id);
+
+
+        return formatJSONResponse({
+            ...pet
+        })
+    } catch (error) {
+        console.log(error)
+        return formatJSONException()
+    }
+}
+
+function extractFile(event) {
+    
+    const boundary = parseMultipart.getBoundary(event.headers['Content-Type'])
+    let parts = parseMultipart.Parse(Buffer.from(event.body, "base64"), boundary);
+
+    if (!parts.filename) {
+        parts = parseMultipart.Parse(Buffer.from(event.body), boundary);
+    }
+
+     const [{ filename, data }] = parts
+   
+    return {
+      filename,
+      data
+    }
+  }
