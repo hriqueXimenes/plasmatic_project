@@ -8,6 +8,8 @@ import { UpdatePetDTO } from "./dto/update-pet.dto";
 import { FetchPetDTO } from "./dto/fetch-pet";
 import { S3 } from "aws-sdk";
 import { format } from "path";
+import { HttpCode, PatternResult } from "@libs/api-gateway";
+import { PET_ERROR } from "src/errors";
 
 
 dotenv.config()
@@ -15,7 +17,7 @@ export class PetService {
 
     private tableNamePets: string;
     private dynamoDb: DocumentClient;
-    private s3:S3;
+    private s3: S3;
 
     constructor() {
         this.s3 = new S3()
@@ -23,66 +25,82 @@ export class PetService {
         this.dynamoDb = dynamoDBClient()
     }
 
-    async fetchPets(dto: FetchPetDTO): Promise<Pet[]> {
+    async fetchPets(dto: FetchPetDTO): Promise<PatternResult> {
 
-        let filterExp = "attribute_not_exists(#deletedAt)"
-        let expressionAttr = {
-            "#deletedAt": "deletedAt",
-        }
-        let expressionAttrVal = undefined
-
-
-        if (dto.status) {
-            filterExp = "#status = :status and attribute_not_exists(#deletedAt)"
-            expressionAttr["#status"] = "status"
-            expressionAttrVal = { ":status": dto.status }
-        }
-
-        let params = {
-            FilterExpression: filterExp,
-            ExpressionAttributeNames: expressionAttr,
-            ExpressionAttributeValues: expressionAttrVal,
-            TableName: this.tableNamePets,
-        };
-
-        const pets = await this.dynamoDb.scan(params).promise()
-        return pets.Items as Pet[];
-    }
-
-    async fetchPet(id: string): Promise<Pet> {
-
-        var params = {
-            TableName: this.tableNamePets,
-        };
-
-        params["FilterExpression"] = "#id = :id and attribute_not_exists(#deletedAt)";
-        params["ExpressionAttributeNames"] = {
-            "#id": "id",
-            "#deletedAt": "deletedAt",
-        }
-        params["ExpressionAttributeValues"] = { ":id": id }
-
-        const pets = await this.dynamoDb.scan(params).promise()
-        return pets.Items[0] as Pet;
-    }
-
-    async createPet(dto: CreatePetDTO): Promise<Pet> {
-
-        const newPet = new Pet(dto);
-
-        newPet.id = v4();
-        newPet.createdAt = new Date().toISOString();
-
-        await this.dynamoDb.put(newPet.toDynamoDB(this.tableNamePets)).promise()
-
-        return newPet;
-    }
-
-    async updatePet(dto: UpdatePetDTO): Promise<Pet> {
         try {
-            const oldPet = await this.fetchPet(dto.id);
+            let filterExp = "attribute_not_exists(#deletedAt)"
+            let expressionAttr = {
+                "#deletedAt": "deletedAt",
+            }
+            let expressionAttrVal = undefined
+
+
+            if (dto.status) {
+                filterExp = "#status = :status and attribute_not_exists(#deletedAt)"
+                expressionAttr["#status"] = "status"
+                expressionAttrVal = { ":status": dto.status }
+            }
+
+            let params = {
+                FilterExpression: filterExp,
+                ExpressionAttributeNames: expressionAttr,
+                ExpressionAttributeValues: expressionAttrVal,
+                TableName: this.tableNamePets,
+            };
+
+            const pets = await this.dynamoDb.scan(params).promise()
+            return new PatternResult(HttpCode.SUCCESSFULLY, pets.Items as Pet[]);
+        } catch (error) {
+            return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
+        }
+    }
+
+    async fetchPet(id: string): Promise<PatternResult> {
+        try {
+            var params = {
+                TableName: this.tableNamePets,
+            };
+
+            params["FilterExpression"] = "#id = :id and attribute_not_exists(#deletedAt)";
+            params["ExpressionAttributeNames"] = {
+                "#id": "id",
+                "#deletedAt": "deletedAt",
+            }
+            params["ExpressionAttributeValues"] = { ":id": id }
+
+            const pet = await this.dynamoDb.scan(params).promise()
+            if (pet.Items.length == 0) {
+                return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_NOT_FOUND);
+            }
+
+            return new PatternResult(HttpCode.SUCCESSFULLY, pet.Items[0] as Pet);
+
+        } catch (error) {
+            return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
+        }
+    }
+
+    async createPet(dto: CreatePetDTO): Promise<PatternResult> {
+
+        try {
+            const newPet = new Pet(dto);
+
+            newPet.id = v4();
+            newPet.createdAt = new Date().toISOString();
+
+            await this.dynamoDb.put(newPet.toDynamoDB(this.tableNamePets)).promise()
+            return new PatternResult(HttpCode.SUCCESSFULLY, newPet);
+        } catch (error) {
+            return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
+        }
+    }
+
+    async updatePet(dto: UpdatePetDTO): Promise<PatternResult> {
+        try {
+            const oldPet = (await this.fetchPet(dto.id)).getBody();
+
             if (!oldPet) {
-                throw Error('pin not found');
+                return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_NOT_FOUND);
             }
 
             Object.assign(oldPet, dto)
@@ -98,17 +116,17 @@ export class PetService {
                 ReturnValues: "ALL_NEW"
             }).promise();
 
-            return result.Attributes as Pet;
+            return new PatternResult(HttpCode.SUCCESSFULLY, result.Attributes as Pet);
         } catch (error) {
-            throw error;
+            return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
 
-    async deletePet(id: string): Promise<Pet> {
+    async deletePet(id: string): Promise<PatternResult> {
         try {
-            const oldPet = await this.fetchPet(id);
+            const oldPet = (await this.fetchPet(id)).getBody();
             if (!oldPet) {
-                throw Error('pet not found');
+                return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_NOT_FOUND);
             }
 
             oldPet.deletedAt = new Date().toISOString();
@@ -122,17 +140,17 @@ export class PetService {
                 ReturnValues: "ALL_NEW"
             }).promise();
 
-            return result.Attributes as Pet;
+            return new PatternResult(HttpCode.SUCCESSFULLY, result.Attributes as Pet);
         } catch (error) {
-            throw error;
+            return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
 
-    async uploadImagePet(filename, data, id:string): Promise<any> {
+    async uploadImagePet(filename, data, id: string): Promise<PatternResult> {
         try {
-            const oldPet = await this.fetchPet(id);
+            const oldPet = (await this.fetchPet(id)).getBody();
             if (!oldPet) {
-                throw Error('pet not found');
+                return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_NOT_FOUND);
             }
 
             const format = filename.split(".")
@@ -148,9 +166,13 @@ export class PetService {
             dto.images = oldPet.images
 
             await this.updatePet(dto)
-            return oldPet;
+            return new PatternResult(HttpCode.SUCCESSFULLY, oldPet);
         } catch (error) {
-            throw error;
+            return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
+    }
+
+    getTableName() {
+        return this.tableNamePets
     }
 }
