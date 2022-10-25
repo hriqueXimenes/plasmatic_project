@@ -7,9 +7,8 @@ import { v4 } from "uuid";
 import { UpdatePetDTO } from "./dto/update-pet.dto";
 import { FetchPetDTO } from "./dto/fetch-pet";
 import { S3 } from "aws-sdk";
-import { format } from "path";
-import { HttpCode, PatternResult } from "@libs/api-gateway";
-import { PET_ERROR } from "src/errors";
+import { HttpCode, PatternResult } from "../../libs/api-gateway";
+import { PET_ERROR } from "../../errors";
 
 
 dotenv.config()

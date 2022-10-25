@@ -5,10 +5,10 @@ import { v4 } from "uuid";
 import { Order } from "./entity/order.entity";
 import { CreateOrderDTO } from "./dto/create-order";
 import { ORDER_STATUS } from "./constants";
-import { PetService } from "@functions/pet/service";
+import { PetService } from "../../functions/pet/service";
 import { OrderRO } from "./ro/order.ro";
-import { HttpCode, PatternResult } from "@libs/api-gateway";
-import { ORDER_ERROR, PET_ERROR } from "src/errors";
+import { HttpCode, PatternResult } from "../../libs/api-gateway";
+import { ORDER_ERROR, PET_ERROR } from "../../errors";
 
 
 dotenv.config()
@@ -112,8 +112,6 @@ export class OrderService {
                     ReturnValues: "ALL_NEW"
                 }
 
-                console.log(params)
-
                 await this.dynamoDb.update(params).promise();
             }
 
@@ -121,5 +119,9 @@ export class OrderService {
         } catch (error) {
             return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
         }
+    }
+
+    getTableName() {
+        return this.tableNameOrders
     }
 }

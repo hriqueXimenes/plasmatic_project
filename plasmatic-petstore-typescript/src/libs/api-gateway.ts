@@ -43,28 +43,8 @@ export class PatternResult {
 
     return this.body;
   }
-}
 
-export const formatJSONResponse = (response: Record<string, unknown>) => {
-  return {
-    statusCode: HttpCode.SUCCESSFULLY,
-    body: JSON.stringify(response)
-  }
-}
-
-export const formatJSONError = (msg:string) => {
-  return {
-    statusCode: HttpCode.BAD_REQUEST,
-    body: JSON.stringify({
-      code:HttpCode.SUCCESSFULLY,
-      message: msg
-    })
-  }
-}
-
-export const formatJSONException = () => {
-  return {
-    statusCode: HttpCode.EXCEPTION,
-    body: null
+  getCode() {
+    return this.statusCode
   }
 }

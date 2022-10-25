@@ -11,3 +11,14 @@ export const dynamoDBClient = (): DocumentClient => {
   
   return new AWS.DynamoDB.DocumentClient();
 };
+
+export const dynamoDB = (): AWS.DynamoDB => {
+  if (process.env.IS_OFFLINE) {
+    return new AWS.DynamoDB({
+      region: "localhost",
+      endpoint: "http://localhost:5000",
+    });
+  }
+  
+  return new AWS.DynamoDB;
+};
