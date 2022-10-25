@@ -32,7 +32,7 @@ export class PetService {
             let expressionAttr = {
                 "#deletedAt": "deletedAt",
             }
-            let expressionAttrVal = undefined
+            let expressionAttrVal = {}
 
 
             if (dto.status) {
@@ -70,7 +70,7 @@ export class PetService {
             params["ExpressionAttributeValues"] = { ":id": id }
 
             const pet = await this.dynamoDb.scan(params).promise()
-            if (pet.Items.length == 0) {
+            if (pet.Items?.length == 0) {
                 return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_NOT_FOUND);
             }
 
