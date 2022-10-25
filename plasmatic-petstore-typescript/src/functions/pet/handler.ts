@@ -1,4 +1,4 @@
-import { formatJSONResponse, formatJSONError, formatJSONException, HttpCode, PatternResult } from '@libs/api-gateway';
+import { HttpCode, PatternResult } from '@libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreatePetDTO } from './dto/create-pet.dto';
 import { FetchPetDTO } from './dto/fetch-pet';
@@ -17,7 +17,7 @@ export const fetchPets = async (event: APIGatewayProxyEvent): Promise<APIGateway
 
     const validateError = ValidatePetDTO(dto, "get").error
     if (validateError) {
-        return formatJSONError(validateError.details[0].message)
+        return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
 
     const result = await petService.fetchPets(dto);
