@@ -13,7 +13,7 @@ const serverlessConfiguration: AWS = {
     runtime: 'nodejs16.x',
     apiGateway: {
       binaryMediaTypes: [
-        '*/*'],
+        'multipart/form-data'],
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
     },

@@ -1,4 +1,4 @@
-import { formatJSONResponse, formatJSONError, formatJSONException, HttpCode, PatternResult } from '@libs/api-gateway';
+import { HttpCode, PatternResult } from '@libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreatePetDTO } from './dto/create-pet.dto';
 import { FetchPetDTO } from './dto/fetch-pet';
@@ -7,17 +7,21 @@ import { UpdatePetDTO } from './dto/update-pet.dto';
 import { PetService } from './service';
 import parseMultipart from 'parse-multipart';
 import { PET_ERROR } from 'src/errors';
+import { EVENT } from './constants';
+import { LoggerService } from '../../libs/log';
 
 
 const petService = new PetService();
 
 export const fetchPets = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    LoggerService.accessLog(EVENT.FETCH_PETS_TRIGGERED)
+
     const dto = new FetchPetDTO()
     Object.assign(dto, event.queryStringParameters)
 
     const validateError = ValidatePetDTO(dto, "get").error
     if (validateError) {
-        return formatJSONError(validateError.details[0].message)
+        return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
 
     const result = await petService.fetchPets(dto);
@@ -25,6 +29,8 @@ export const fetchPets = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const fetchPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    LoggerService.accessLog(EVENT.FETCH_PET_TRIGGERED, event.pathParameters.id)
+
     if (!event.pathParameters.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
@@ -35,6 +41,7 @@ export const fetchPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayP
 
 export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const dto = JSON.parse(event.body) as CreatePetDTO
+    LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
     const validateError = ValidatePetDTO(dto, "post").error
     if (validateError) {
@@ -47,6 +54,7 @@ export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 
 export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     const dto = JSON.parse(event.body) as UpdatePetDTO
+    LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
     const validateError = ValidatePetDTO(dto, "patch").error
     if (validateError) {
@@ -58,6 +66,8 @@ export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const deletePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    LoggerService.accessLog(EVENT.DELETE_PET_TRIGGERED, event.pathParameters.id)
+
     if (!event.pathParameters.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
@@ -67,7 +77,9 @@ export const deletePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const uploadImagePet = async (event): Promise<APIGatewayProxyResult> => {
-    //serverless-offline don't convert multipart to base64 - need to deploy in AWS.
+    //serverless-offline can't convert multipart to base64 - need to deploy in AWS.
+    LoggerService.accessLog(EVENT.UPLOAD_IMAGE_PET_TRIGGERED, event)
+
     if (!event.pathParameters.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
@@ -84,5 +96,4 @@ export const uploadImagePet = async (event): Promise<APIGatewayProxyResult> => {
 
     const pet = await petService.uploadImagePet(filename, data, event.pathParameters.id);
     return pet.toJSON();
-
 }

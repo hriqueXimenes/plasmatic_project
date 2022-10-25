@@ -1,4 +1,4 @@
-import { PET_STATUS } from "../enum/pet-status.enum";
+import { PET_STATUS } from "../constants";
 
 export class Pet {
     id: string;
