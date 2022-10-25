@@ -8,12 +8,6 @@ export const ValidateOrderDTO = (dto, requestType) => {
             post: (schema) => schema.forbidden(),
         }),
 
-        // -- quantity
-        quantity: Joi.number().integer().min(1).max(999).required()
-        .alter({
-            post: (schema) => schema.required(),
-        }),
-
         // -- products
         products: Joi.array().items(products).unique((a, b) => a.petid == b.petid).required()
     })

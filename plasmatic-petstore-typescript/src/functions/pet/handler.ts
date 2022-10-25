@@ -1,4 +1,4 @@
-import { formatJSONResponse, formatJSONError, formatJSONException } from '@libs/api-gateway';
+import { formatJSONResponse, formatJSONError, formatJSONException, HttpCode, PatternResult } from '@libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreatePetDTO } from './dto/create-pet.dto';
 import { FetchPetDTO } from './dto/fetch-pet';
@@ -6,42 +6,31 @@ import { ValidatePetDTO } from './dto/schema';
 import { UpdatePetDTO } from './dto/update-pet.dto';
 import { PetService } from './service';
 import parseMultipart from 'parse-multipart';
+import { PET_ERROR } from 'src/errors';
 
 
 const petService = new PetService();
 
 export const fetchPets = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    try {
-        const dto = new FetchPetDTO()
-        Object.assign(dto, event.queryStringParameters)
+    const dto = new FetchPetDTO()
+    Object.assign(dto, event.queryStringParameters)
 
-        const validateError = ValidatePetDTO(dto, "get").error
-        if (validateError) {
-            return formatJSONError(validateError.details[0].message)
-        }
-
-        const pets = await petService.fetchPets(dto);
-        return formatJSONResponse({
-            pets
-        })
-    } catch (error) {
-        return formatJSONException()
+    const validateError = ValidatePetDTO(dto, "get").error
+    if (validateError) {
+        return formatJSONError(validateError.details[0].message)
     }
+
+    const result = await petService.fetchPets(dto);
+    return result.toJSON()
 }
 
 export const fetchPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     if (!event.pathParameters.id) {
-        return formatJSONError("Id parameter is mandatory")
+        return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
 
-    try {
-        const pets = await petService.fetchPet(event.pathParameters.id);
-        return formatJSONResponse({
-            ...pets
-        })
-    } catch (error) {
-        return formatJSONException()
-    }
+    const pets = await petService.fetchPet(event.pathParameters.id);
+    return pets.toJSON();
 }
 
 export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -49,17 +38,11 @@ export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 
     const validateError = ValidatePetDTO(dto, "post").error
     if (validateError) {
-        return formatJSONError(validateError.details[0].message)
+        return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
 
-    try {
-        const pet = await petService.createPet(dto);
-        return formatJSONResponse({
-            ...pet
-        })
-    } catch (error) {
-        return formatJSONException()
-    }
+    const pet = await petService.createPet(dto);
+    return pet.toJSON();
 }
 
 export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -67,67 +50,39 @@ export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 
     const validateError = ValidatePetDTO(dto, "patch").error
     if (validateError) {
-        return formatJSONError(validateError.details[0].message)
+        return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
 
-    try {
-        const pet = await petService.updatePet(dto);
-        return formatJSONResponse({
-            ...pet
-        })
-    } catch (error) {
-        return formatJSONException()
-    }
+    const pet = await petService.updatePet(dto);
+    return pet.toJSON();
 }
 
 export const deletePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     if (!event.pathParameters.id) {
-        return formatJSONError("Id parameter is mandatory")
+        return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
 
-    try {
-        const pet = await petService.deletePet(event.pathParameters.id);
-        return formatJSONResponse({
-            ...pet
-        })
-    } catch (error) {
-        return formatJSONException()
-    }
+    const pet = await petService.deletePet(event.pathParameters.id);
+    return pet.toJSON();
 }
 
 export const uploadImagePet = async (event): Promise<APIGatewayProxyResult> => {
     //serverless-offline don't convert multipart to base64 - need to deploy in AWS.
     if (!event.pathParameters.id) {
-        return formatJSONError("Id parameter is mandatory")
+        return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
 
-    try {
-        const { filename, data } = extractFile(event)
-        const pet = await petService.uploadImagePet(filename, data, event.pathParameters.id);
-
-
-        return formatJSONResponse({
-            ...pet
-        })
-    } catch (error) {
-        console.log(error)
-        return formatJSONException()
-    }
-}
-
-function extractFile(event) {
-    
     const boundary = parseMultipart.getBoundary(event.headers['Content-Type'])
     let parts = parseMultipart.Parse(Buffer.from(event.body, "base64"), boundary);
+    
 
     if (!parts.filename) {
         parts = parseMultipart.Parse(Buffer.from(event.body), boundary);
     }
 
-     const [{ filename, data }] = parts
-   
-    return {
-      filename,
-      data
-    }
-  }
+    const [{ filename, data }] = parts
+
+    const pet = await petService.uploadImagePet(filename, data, event.pathParameters.id);
+    return pet.toJSON();
+
+}

@@ -7,6 +7,8 @@ import { CreateOrderDTO } from "./dto/create-order";
 import { ORDER_STATUS } from "./constants";
 import { PetService } from "@functions/pet/service";
 import { OrderRO } from "./ro/order.ro";
+import { HttpCode, PatternResult } from "@libs/api-gateway";
+import { ORDER_ERROR, PET_ERROR } from "src/errors";
 
 
 dotenv.config()
@@ -22,62 +24,75 @@ export class OrderService {
         this.dynamoDb = dynamoDBClient()
     }
 
-    async fetchOrder(id: string): Promise<OrderRO> {
+    async fetchOrder(id: string): Promise<PatternResult> {
 
-        var params = {
-            TableName: this.tableNameOrders,
-        };
-
-        params["FilterExpression"] = "#id = :id and attribute_not_exists(#deletedAt)";
-        params["ExpressionAttributeNames"] = {
-            "#id": "id",
-            "#deletedAt": "deletedAt",
-        }
-        params["ExpressionAttributeValues"] = { ":id": id }
-
-        const orders = await this.dynamoDb.scan(params).promise()
-        return new OrderRO(orders.Items as Order[]);
-    }
-
-    async createOrder(dto: CreateOrderDTO): Promise<OrderRO> {
-
-        const newOrders:Order[] = [];
-        const orderId = v4();
-        for (let i = 0; i < dto.products.length; i++) {
-            const pet = await this.petService.fetchPet(dto.products[i].petid)
-            if (!pet) {
-                throw Error('pet not found');
-            }
-
-            const newOrder = new Order(dto.products[i]);
-            
-            newOrder.createdAt = new Date().toISOString();
-            newOrder.status = ORDER_STATUS.PLACED;
-            newOrder.quantity = dto.products[i].quantity;
-            newOrder.id = orderId;
-            newOrders.push(newOrder)
-        }
-
-        const paramOrder = {
-            RequestItems: {
-              [this.tableNameOrders]: newOrders.map(item => ({
-                PutRequest: {
-                  Item: item
-                }
-              }))
-            }
-          }
-          
-        await this.dynamoDb.batchWrite(paramOrder).promise()
-
-        return new OrderRO(newOrders);
-    }
-
-    async deleteOrder(id:string): Promise<OrderRO> {
         try {
-            const oldOrder = await this.fetchOrder(id);
+            var params = {
+                TableName: this.tableNameOrders,
+            };
+
+            params["FilterExpression"] = "#id = :id and attribute_not_exists(#deletedAt)";
+            params["ExpressionAttributeNames"] = {
+                "#id": "id",
+                "#deletedAt": "deletedAt",
+            }
+            params["ExpressionAttributeValues"] = { ":id": id }
+
+            const orders = await this.dynamoDb.scan(params).promise()
+            if (orders.Items.length == 0) {
+                return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_NOT_FOUND);
+            }
+
+            return new PatternResult(HttpCode.SUCCESSFULLY, new OrderRO(orders.Items as Order[]));
+        } catch (error) {
+            return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
+        }
+    }
+
+    async createOrder(dto: CreateOrderDTO): Promise<PatternResult> {
+
+        try {
+            const newOrders: Order[] = [];
+            const orderId = v4();
+            for (let i = 0; i < dto.products.length; i++) {
+                const pet = (await this.petService.fetchPet(dto.products[i].petid)).getBody()
+                if (!pet) {
+                    return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_NOT_FOUND + ` - petid: ${dto.products[i].petid}`);
+                }
+
+                const newOrder = new Order(dto.products[i]);
+
+                newOrder.createdAt = new Date().toISOString();
+                newOrder.status = ORDER_STATUS.PLACED;
+                newOrder.quantity = dto.products[i].quantity;
+                newOrder.id = orderId;
+                newOrders.push(newOrder)
+            }
+
+            const paramOrder = {
+                RequestItems: {
+                    [this.tableNameOrders]: newOrders.map(item => ({
+                        PutRequest: {
+                            Item: item
+                        }
+                    }))
+                }
+            }
+
+            await this.dynamoDb.batchWrite(paramOrder).promise()
+
+            return new PatternResult(HttpCode.SUCCESSFULLY, new OrderRO(newOrders));
+        }
+        catch (error) {
+            return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
+        }
+    }
+
+    async deleteOrder(id: string): Promise<PatternResult> {
+        try {
+            const oldOrder = (await this.fetchOrder(id)).getBody();
             if (!oldOrder || !oldOrder.products) {
-                throw Error('order not found');
+                return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_NOT_FOUND);
             }
 
             oldOrder.deletedAt = new Date().toISOString()
@@ -102,9 +117,9 @@ export class OrderService {
                 await this.dynamoDb.update(params).promise();
             }
 
-            return oldOrder;
+            return new PatternResult(HttpCode.SUCCESSFULLY, oldOrder);
         } catch (error) {
-            throw error;
+            return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
         }
     }
 }

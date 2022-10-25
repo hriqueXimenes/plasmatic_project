@@ -1,5 +1,5 @@
 import type { AWS } from '@serverless/typescript';
-import { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet } from './src/functions/pet/index';
+import { fetchPet, fetchPets, createPet, updatePet, deletePet, uploadImagePet } from './src/functions/pet/route';
 import { fetchOrder, createOrder, deleteOrder } from './src/functions/order/route';
 import * as dotenv from 'dotenv';
 

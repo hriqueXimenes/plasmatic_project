@@ -1,5 +1,4 @@
 export class CreateOrderDTO {
-    quantity: number;
     products: CreateProductsDTO[];
 }
 
