@@ -40,7 +40,7 @@ export class OrderService {
             params["ExpressionAttributeValues"] = { ":id": id }
 
             const orders = await this.dynamoDb.scan(params).promise()
-            if (orders.Items.length == 0) {
+            if (orders.Items?.length == 0) {
                 return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_NOT_FOUND);
             }
 

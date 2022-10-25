@@ -13,7 +13,7 @@ const orderServicer = new OrderService();
 export const fetchOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
     LoggerService.accessLog(EVENT.FETCH_ORDER_TRIGGERED)
 
-    if (!event.pathParameters.id) {
+    if (!event.pathParameters?.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_ID_MANDATORY).toJSON()
     }
 
@@ -22,7 +22,7 @@ export const fetchOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewa
 }
 
 export const createOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const dto = JSON.parse(event.body) as CreateOrderDTO
+    const dto = JSON.parse(event.body!) as CreateOrderDTO
     LoggerService.accessLog(EVENT.CREATE_ORDER_TRIGGERED, dto)
 
     const validateError = ValidateOrderDTO(dto, "post").error
@@ -35,11 +35,11 @@ export const createOrder = async (event: APIGatewayProxyEvent): Promise<APIGatew
 }
 
 export const deleteOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    LoggerService.accessLog(EVENT.DELETE_ORDER_TRIGGERED, event.pathParameters.id)
-    if (!event.pathParameters.id) {
+    LoggerService.accessLog(EVENT.DELETE_ORDER_TRIGGERED, event.pathParameters?.id)
+    if (!event.pathParameters?.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_ID_MANDATORY).toJSON()
     }
 
-    const order = await orderServicer.deleteOrder(event.pathParameters.id);
+    const order = await orderServicer.deleteOrder(event.pathParameters?.id);
     return order.toJSON()
 }

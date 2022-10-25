@@ -1,5 +1,5 @@
 {
-  "name": "plasmatic-petstore-typescript",
+  "name": "plasmatic-project",
   "version": "1.0.0",
   "description": "Serverless aws-nodejs-typescript template",
   "main": "serverless.ts",

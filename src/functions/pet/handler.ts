@@ -1,4 +1,4 @@
-import { HttpCode, PatternResult } from '@libs/api-gateway';
+import { HttpCode, PatternResult } from '../../libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreatePetDTO } from './dto/create-pet.dto';
 import { FetchPetDTO } from './dto/fetch-pet';
@@ -6,7 +6,7 @@ import { ValidatePetDTO } from './dto/schema';
 import { UpdatePetDTO } from './dto/update-pet.dto';
 import { PetService } from './service';
 import parseMultipart from 'parse-multipart';
-import { PET_ERROR } from 'src/errors';
+import { PET_ERROR } from '../../errors';
 import { EVENT } from './constants';
 import { LoggerService } from '../../libs/log';
 
@@ -29,18 +29,18 @@ export const fetchPets = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const fetchPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    LoggerService.accessLog(EVENT.FETCH_PET_TRIGGERED, event.pathParameters.id)
+    LoggerService.accessLog(EVENT.FETCH_PET_TRIGGERED, event.pathParameters?.id)
 
-    if (!event.pathParameters.id) {
+    if (!event.pathParameters?.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
 
-    const pets = await petService.fetchPet(event.pathParameters.id);
+    const pets = await petService.fetchPet(event.pathParameters?.id);
     return pets.toJSON();
 }
 
 export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const dto = JSON.parse(event.body) as CreatePetDTO
+    const dto = JSON.parse(event.body!) as CreatePetDTO
     LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
     const validateError = ValidatePetDTO(dto, "post").error
@@ -53,7 +53,7 @@ export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const dto = JSON.parse(event.body) as UpdatePetDTO
+    const dto = JSON.parse(event.body!) as UpdatePetDTO
     LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
     const validateError = ValidatePetDTO(dto, "patch").error
@@ -66,13 +66,13 @@ export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const deletePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    LoggerService.accessLog(EVENT.DELETE_PET_TRIGGERED, event.pathParameters.id)
+    LoggerService.accessLog(EVENT.DELETE_PET_TRIGGERED, event.pathParameters?.id)
 
-    if (!event.pathParameters.id) {
+    if (!event.pathParameters?.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
 
-    const pet = await petService.deletePet(event.pathParameters.id);
+    const pet = await petService.deletePet(event.pathParameters?.id);
     return pet.toJSON();
 }
 
