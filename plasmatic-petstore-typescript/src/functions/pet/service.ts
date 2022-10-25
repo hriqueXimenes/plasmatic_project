@@ -9,6 +9,7 @@ import { FetchPetDTO } from "./dto/fetch-pet";
 import { S3 } from "aws-sdk";
 import { HttpCode, PatternResult } from "../../libs/api-gateway";
 import { PET_ERROR } from "../../errors";
+import { LoggerService } from "../../libs/log";
 
 
 dotenv.config()
@@ -50,6 +51,7 @@ export class PetService {
             const pets = await this.dynamoDb.scan(params).promise()
             return new PatternResult(HttpCode.SUCCESSFULLY, pets.Items as Pet[]);
         } catch (error) {
+            LoggerService.error("Error to fetch pets", error)
             return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
@@ -75,6 +77,7 @@ export class PetService {
             return new PatternResult(HttpCode.SUCCESSFULLY, pet.Items[0] as Pet);
 
         } catch (error) {
+            LoggerService.error("Error to fetch pet", error)
             return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
@@ -90,6 +93,7 @@ export class PetService {
             await this.dynamoDb.put(newPet.toDynamoDB(this.tableNamePets)).promise()
             return new PatternResult(HttpCode.SUCCESSFULLY, newPet);
         } catch (error) {
+            LoggerService.error("Error to create pet", error)
             return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
@@ -117,6 +121,7 @@ export class PetService {
 
             return new PatternResult(HttpCode.SUCCESSFULLY, result.Attributes as Pet);
         } catch (error) {
+            LoggerService.error("Error to update pet", error)
             return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
@@ -141,6 +146,7 @@ export class PetService {
 
             return new PatternResult(HttpCode.SUCCESSFULLY, result.Attributes as Pet);
         } catch (error) {
+            LoggerService.error("Error to delete pet", error)
             return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
@@ -167,6 +173,7 @@ export class PetService {
             await this.updatePet(dto)
             return new PatternResult(HttpCode.SUCCESSFULLY, oldPet);
         } catch (error) {
+            LoggerService.error("Error to upload image pet", error)
             return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION);
         }
     }
