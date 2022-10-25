@@ -9,6 +9,7 @@ import { PetService } from "../../functions/pet/service";
 import { OrderRO } from "./ro/order.ro";
 import { HttpCode, PatternResult } from "../../libs/api-gateway";
 import { ORDER_ERROR, PET_ERROR } from "../../errors";
+import { LoggerService } from "../../libs/log";
 
 
 dotenv.config()
@@ -45,6 +46,7 @@ export class OrderService {
 
             return new PatternResult(HttpCode.SUCCESSFULLY, new OrderRO(orders.Items as Order[]));
         } catch (error) {
+            LoggerService.error("Error to fetch order", error)
             return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
         }
     }
@@ -84,6 +86,7 @@ export class OrderService {
             return new PatternResult(HttpCode.SUCCESSFULLY, new OrderRO(newOrders));
         }
         catch (error) {
+            LoggerService.error("Error to create orders", error)
             return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
         }
     }
@@ -117,6 +120,7 @@ export class OrderService {
 
             return new PatternResult(HttpCode.SUCCESSFULLY, oldOrder);
         } catch (error) {
+            LoggerService.error("Error to delete order", error)
             return new PatternResult(HttpCode.EXCEPTION, ORDER_ERROR.ORDER_EXCEPTION);
         }
     }
