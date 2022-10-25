@@ -17,8 +17,7 @@ export const fetchOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewa
         return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_ID_MANDATORY).toJSON()
     }
 
-    const order = await orderServicer.fetchOrder(event.pathParameters.id);
-    return order.toJSON()
+    return (await orderServicer.fetchOrder(event.pathParameters.id)).toJSON();
 }
 
 export const createOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -30,8 +29,7 @@ export const createOrder = async (event: APIGatewayProxyEvent): Promise<APIGatew
         return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
 
-    const order = await orderServicer.createOrder(dto);
-    return order.toJSON();
+    return (await orderServicer.createOrder(dto)).toJSON();
 }
 
 export const deleteOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -40,6 +38,5 @@ export const deleteOrder = async (event: APIGatewayProxyEvent): Promise<APIGatew
         return new PatternResult(HttpCode.BAD_REQUEST, ORDER_ERROR.ORDER_ID_MANDATORY).toJSON()
     }
 
-    const order = await orderServicer.deleteOrder(event.pathParameters?.id);
-    return order.toJSON()
+    return (await orderServicer.deleteOrder(event.pathParameters?.id)).toJSON();
 }
