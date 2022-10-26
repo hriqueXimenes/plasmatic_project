@@ -12,6 +12,13 @@ export enum HttpCode {
   NOT_FOUND = 404
 }
 
+export enum HttpRequest {
+  GET = 'get',
+  POST = 'post',
+  PATCH = 'patch',
+  DELETE = 'delete'
+}
+
 export class PatternResult {
   private statusCode: HttpCode;
   private body: any;

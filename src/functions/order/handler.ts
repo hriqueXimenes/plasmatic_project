@@ -1,4 +1,4 @@
-import { PatternResult, HttpCode } from '../../libs/api-gateway';
+import { PatternResult, HttpCode, HttpRequest } from '../../libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreateOrderDTO } from './dto/create-order';
 import { ValidateOrderDTO } from './dto/schema';
@@ -24,7 +24,7 @@ export const createOrder = async (event: APIGatewayProxyEvent): Promise<APIGatew
     const dto = JSON.parse(event.body) as CreateOrderDTO
     LoggerService.accessLog(EVENT.CREATE_ORDER_TRIGGERED, dto)
 
-    const validateError = ValidateOrderDTO(dto, "post").error
+    const validateError = ValidateOrderDTO(dto, HttpRequest.POST).error
     if (validateError) {
         return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }

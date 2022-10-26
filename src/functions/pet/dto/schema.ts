@@ -1,4 +1,5 @@
 import * as Joi from '@hapi/joi';
+import { HttpRequest } from '@libs/api-gateway';
 import { PET_STATUS } from '../constants';
 
 let tags = Joi.object().keys({
@@ -18,8 +19,8 @@ export const ValidatePetDTO = (dto, requestType) => {
     let schema = Joi.object({
         // -- id
         id: Joi.string().alter({
-            patch: (schema) => schema.required(),
-            post: (schema) => schema.forbidden(),
+            [HttpRequest.PATCH]: (schema) => schema.required(),
+            [HttpRequest.POST]: (schema) => schema.forbidden(),
         }),
 
         // -- name
@@ -28,11 +29,11 @@ export const ValidatePetDTO = (dto, requestType) => {
             .min(3)
             .max(30)
             .alter({
-                post: (schema) => schema.required(),
+                [HttpRequest.POST]: (schema) => schema.required(),
             }),
         // -- status
         status: Joi.string().valid(...Object.values(PET_STATUS)).alter({
-            post: (schema) => schema.required(),
+            [HttpRequest.POST]: (schema) => schema.required(),
         }),
 
         // -- category

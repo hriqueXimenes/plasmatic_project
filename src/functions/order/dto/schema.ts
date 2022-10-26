@@ -1,11 +1,12 @@
 import * as Joi from '@hapi/joi';
+import { HttpRequest } from '@libs/api-gateway';
 
 export const ValidateOrderDTO = (dto, requestType) => {
     let schema = Joi.object({
         // -- id
         id: Joi.string().alter({
-            patch: (schema) => schema.required(),
-            post: (schema) => schema.forbidden(),
+            [HttpRequest.PATCH]: (schema) => schema.required(),
+            [HttpRequest.POST]: (schema) => schema.forbidden(),
         }),
 
         // -- products

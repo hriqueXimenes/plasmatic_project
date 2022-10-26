@@ -1,4 +1,4 @@
-import { HttpCode, PatternResult } from '../../libs/api-gateway';
+import { HttpCode, HttpRequest, PatternResult } from '../../libs/api-gateway';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { CreatePetDTO } from './dto/create-pet.dto';
 import { FetchPetDTO } from './dto/fetch-pet';
@@ -19,7 +19,7 @@ export const fetchPets = async (event: APIGatewayProxyEvent): Promise<APIGateway
     const dto = new FetchPetDTO()
     Object.assign(dto, event.queryStringParameters)
 
-    const validateError = ValidatePetDTO(dto, "get").error
+    const validateError = ValidatePetDTO(dto, HttpRequest.GET).error
     if (validateError) {
         return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
@@ -43,7 +43,7 @@ export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGateway
     const dto = JSON.parse(event.body) as CreatePetDTO
     LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
-    const validateError = ValidatePetDTO(dto, "post").error
+    const validateError = ValidatePetDTO(dto, HttpRequest.POST).error
     if (validateError) {
         return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
@@ -56,7 +56,7 @@ export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
     const dto = JSON.parse(event.body) as UpdatePetDTO
     LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
-    const validateError = ValidatePetDTO(dto, "patch").error
+    const validateError = ValidatePetDTO(dto, HttpRequest.PATCH).error
     if (validateError) {
         return new PatternResult(HttpCode.BAD_REQUEST, validateError.details[0].message).toJSON()
     }
