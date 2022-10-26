@@ -32,7 +32,7 @@ export class PetService {
             let expressionAttr = {
                 "#deletedAt": "deletedAt",
             }
-            let expressionAttrVal = {}
+            let expressionAttrVal = undefined
 
 
             if (dto.status) {
