@@ -40,7 +40,7 @@ export const fetchPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayP
 }
 
 export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const dto = JSON.parse(event.body!) as CreatePetDTO
+    const dto = JSON.parse(event.body) as CreatePetDTO
     LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
     const validateError = ValidatePetDTO(dto, "post").error
@@ -53,7 +53,7 @@ export const createPet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 }
 
 export const updatePet = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const dto = JSON.parse(event.body!) as UpdatePetDTO
+    const dto = JSON.parse(event.body) as UpdatePetDTO
     LoggerService.accessLog(EVENT.CREATE_PET_TRIGGERED, dto)
 
     const validateError = ValidatePetDTO(dto, "patch").error
@@ -78,22 +78,27 @@ export const deletePet = async (event: APIGatewayProxyEvent): Promise<APIGateway
 
 export const uploadImagePet = async (event): Promise<APIGatewayProxyResult> => {
     //serverless-offline can't convert multipart to base64 - need to deploy in AWS.
-    LoggerService.accessLog(EVENT.UPLOAD_IMAGE_PET_TRIGGERED, event)
+    LoggerService.accessLog(EVENT.UPLOAD_IMAGE_PET_TRIGGERED)
 
     if (!event.pathParameters.id) {
         return new PatternResult(HttpCode.BAD_REQUEST, PET_ERROR.PET_ID_MANDATORY).toJSON()
     }
 
-    const boundary = parseMultipart.getBoundary(event.headers['Content-Type'])
-    let parts = parseMultipart.Parse(Buffer.from(event.body, "base64"), boundary);
+    try {
+        const boundary = parseMultipart.getBoundary(event.headers['Content-Type'])
+        let parts = parseMultipart.Parse(Buffer.from(event.body, "base64"), boundary);
     
+        if (parts.length == 0) {
+            parts = parseMultipart.Parse(Buffer.from(event.body), boundary);
+        }
 
-    if (!parts.filename) {
-        parts = parseMultipart.Parse(Buffer.from(event.body), boundary);
+        const [{ filename, data }] = parts
+
+        const pet = await petService.uploadImagePet(filename, data, event.pathParameters.id);
+
+        return pet.toJSON();
+    } catch (error) {
+        LoggerService.error("Error to upload image pet", error)
+        return new PatternResult(HttpCode.EXCEPTION, PET_ERROR.PET_EXCEPTION).toJSON();
     }
-
-    const [{ filename, data }] = parts
-
-    const pet = await petService.uploadImagePet(filename, data, event.pathParameters.id);
-    return pet.toJSON();
 }

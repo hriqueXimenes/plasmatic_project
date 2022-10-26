@@ -21,7 +21,7 @@ export const fetchOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewa
 }
 
 export const createOrder = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    const dto = JSON.parse(event.body!) as CreateOrderDTO
+    const dto = JSON.parse(event.body) as CreateOrderDTO
     LoggerService.accessLog(EVENT.CREATE_ORDER_TRIGGERED, dto)
 
     const validateError = ValidateOrderDTO(dto, "post").error
