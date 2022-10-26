@@ -33,6 +33,7 @@ const serverlessConfiguration: AWS = {
             "dynamodb:PutItem",
             "dynamodb:UpdateItem",
             "dynamodb:DeleteItem",
+            "dynamodb:BatchWriteItem"
           ],
           Resource: "arn:aws:dynamodb:us-east-1:*:table/*",
         },
